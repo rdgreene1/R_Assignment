@@ -1,8 +1,8 @@
 library(tidyverse)
 library(stringr)
 # Import original data files
-fang_et_al_genotypes = read.table('~/EEOB546_R_Lesson/R_Assignment/fang_et_al_genotypes.txt', sep = '\t', header = T)
-snp_position = read.table('~/EEOB546_R_Lesson/R_Assignment/snp_position.txt', sep = '\t', header = T)
+fang_et_al_genotypes = read.table('./R_Assignment/fang_et_al_genotypes.txt', sep = '\t', header = T)
+snp_position = read.table('./R_Assignment/snp_position.txt', sep = '\t', header = T)
 # Extract columns 1, 3 and 4 from snp_postion.txt
 column_134_snp_position <- select(snp_position, `SNP_ID`, `Chromosome`, `Position`)
 # Create maize and teosinte vectors based on group names
