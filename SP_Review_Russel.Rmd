@@ -1,0 +1,133 @@
+---
+title: "SP Review of Russel R HW"
+author: "Sarah Phelps"
+date: "2024-03-18"
+output: html_document
+---
+
+# Data Inspection
+Make sure to include yout inspection og the data files. For this section I used the following simple commands
+```{r}
+fang_rows <- nrow(fang_data) # number of rows
+fang_size <- file.info("fang_et_al_genotypes.txt")
+fang_head <- head(fang_data)
+
+```
+
+# Import original data files
+Data files were read in clearly. No issues here
+
+# Create maize and teosinte vectors based on group names
+teosinte_groups <- c("ZMPBA", "ZMPIL", "ZMPJA")
+maize_groups <- c("ZMMIL", "ZMMLR", "ZMMMR")
+# I like how you used this string to make it easier to seperate the maize and tesinte groups in the next step. 
+
+# Extract maize and teosinte data based on group names
+Your code ran fine for this portion. To remove column 1 from the data set, this is the code i used. I see you did this later under "Move row names to first column" but this could save you a step. 
+```{r}
+
+clean_teos <- select(teos_subset, abph1.20:zmm3.4)
+
+```
+  
+# Transpose extracted maize and teosinte data
+I liked how you both transposed the data set as well as read it in as a data frame in the same code. I will have to look at encoperating this code into my assignment. 
+
+
+
+# Join transposed data and exracted 1, 3 and 4 snp_position columns
+I see you used inner_join to join the two data sets. I used the cbind() function I learned from another class to do the same step. Here is the code I used for this step. 
+
+```{r}
+# create a subset of the 3 necessary columns
+snp_subset <- select(snp_data, SNP_ID, Chromosome, Position)
+
+# combine the columns of the SNP data set and the maize data set
+maize_combine <- cbind(snp_subset, trans_maize) 
+
+# combine the columns of the SNP dataset and the teosinte data set
+teos_combine <- cbind(snp_subset, trans_teos)
+
+
+```
+It can sometimes be easier to use since you don't need to bind by the same column name. The data files do need to be the same length for the function to work. 
+
+
+# Arrange the data and replace missing data with new variables
+
+Asc_joined_maize_data <- joined_maize_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "?")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(Position)
+  
+Des_joined_maize_data <- joined_maize_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "-")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(desc(Position))
+  
+Asc_joined_teosinte_data <- joined_teosinte_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "?")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(Position)
+  
+Des_joined_teosinte_data <- joined_teosinte_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "-")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(desc(Position))
+  
+For this section, you're code worked fine and it is efficent in it's own way. For the ascending portion, we did not have to subsitute the "-/-" for "?/?" yet. I think if you just ran the following portion of your code it would work. 
+
+```{r}
+Asc_joined_maize_data <- joined_maize_data %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(Position)
+
+Asc_joined_teosinte_data <- joined_teosinte_data %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(Position)
+  
+
+```
+
+The descending portion of your homework is correct and ran fine. 
+
+# Create new data files, one for each chromosome for each organism and export them as .csv files
+Nice work using loops in this section. It cut down the amount of code you used in this section which I appreciate when reviewing your work. This section ran fine and I have no additional comments. 
+
+# ggplots
+I got the same graph as you for this section. 
+
+ggplot(data = joined_maize_data) + geom_bar(mapping = aes(x = Chromosome, fill = Blue))
+ggplot(data = joined_teosinte_data) + geom_bar(mapping = aes(x = Chromosome, fill = Blue))
+
+# Homozygous, Heterozygous, and Missing SNP plots. 
+I think you need more code for this section. Here is the code I used to get the correct number of SNPS.
+
+## Homozygous and Heterozygous SNPS
+```{r}
+omo_snps <- c("\\A/\\A", "\\C/\\C", "\\G/\\G", "\\T/\\T")
+counts <- table(unlist(lapply(homo_snps, grepl, x = unlist(maize_combine))))
+m_homozygotes <- counts[2]
+vm_homozygotes <- as.vector(m_homozygotes)
+total_snps <- 983*1576
+m_heterozygotes <- total_snps - vm_homozygotes
+```
+
+# Missing SNPS
+```{r}
+missing_snp<- length(grep("\\?/\\?", unlist(maize_combine)))
+
+missing_snp2<- length(grep("\\?/\\?", unlist(teos_combine)))
+
+maize_dataframe <- data.frame(Homozygous = vm_homozygotes, Heterozygous = m_heterozygotes, Missing = missing_snp)
+maize_long <- gather(maize_dataframe, key = "variable", value = "value")
+
+teos_dataframe <- data.frame(Homozygous = vt_homozygotes, Heterozygous = t_heterozygotes, Missing = missing_snp2)
+teos_long <- gather(teos_dataframe, key = "variable", value = "value")
+```
+
+It didnt look like you had an issue plotting the data for the first section. I used ggplot to plot the number os SNPS for each data file. 
+
+Make sure to include your own visualization for #3 in your complete data file. 
+
+```
