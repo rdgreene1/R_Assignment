@@ -3,6 +3,13 @@ library(stringr)
 # Import original data files
 fang_et_al_genotypes = read.table('./R_Assignment/fang_et_al_genotypes.txt', sep = '\t', header = T)
 snp_position = read.table('./R_Assignment/snp_position.txt', sep = '\t', header = T)
+
+# You can also import these .txt files from the course GitHub repository 
+```{r}
+fang_et_al_genotypes <- read.table("https://raw.githubusercontent.com/EEOB-BioData/BCB546_Spring2024/main/assignments/UNIX_Assignment/fang_et_al_genotypes.txt", header = TRUE, sep = "\t")
+
+snp_position = read.table("https://raw.githubusercontent.com/EEOB-BioData/BCB546_Spring2024/main/assignments/UNIX_Assignment/snp_position.txt" , header = TRUE, sep = "\t")
+```
 # Extract columns 1, 3 and 4 from snp_postion.txt
 column_134_snp_position <- select(snp_position, `SNP_ID`, `Chromosome`, `Position`)
 # Create maize and teosinte vectors based on group names
@@ -75,3 +82,30 @@ system("git push origin main")
 
 
 homozygous <- c("A/A", "T/T", "G/G", "C/C")
+
+# Portable document format (pdf) print outs for data visualizations 
+# In case you want to save e.g. one or two ggplots as pdf files
+```{r}
+pdf("FileName.pdf") # This saves a pdf file that will contain your ggplots
+print(ggplotName_1) # This first ggplot will be saved in the above created pdf file
+print(ggplotName_2) # This second ggplot will be saved in the above created pdf file
+dev.off()
+```
+
+Final comments
+# When writing an R Markdown file you may want to separate the code from comments by:
+
+```{r}
+code
+```
+# Comment or heading 
+
+* Bullet 1
+* Bullet 2
+or 
+
+1. Bullet 1
+2. Bullet 2
+
+Goodluck!
+
