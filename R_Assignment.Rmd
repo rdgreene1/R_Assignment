@@ -1,0 +1,235 @@
+---
+title: "R_Assignment"
+author: "Russell Greene"
+date: "2024-03-18"
+output: html_document
+---
+
+# R Assignment
+
+### Load Libraries
+
+```{r}
+library(tidyverse)
+library(stringr)
+library(ggplot2)
+library(gridExtra)
+```
+
+## Data Analysis
+
+### Import Data Files
+
+```{r}
+fang_et_al_genotypes = read.table('./fang_et_al_genotypes.txt', sep = '\t', header = T)
+snp_position = read.table('./snp_position.txt', sep = '\t', header = T)
+```
+
+### Analyze Data Structure
+
+```{r}
+str(snp_position)
+str(fang_et_al_genotypes)
+```
+
+fang_et_al_genotypes contains all the genomic SNP data with Sample_ID. It has 986 columns and 2782 rows. snp_position contains the position, chromosome and SNP_ID data. It has 15 columns and 983 rows.
+
+## Data Processing
+
+### Extract Columns from `snp_position`
+
+```{r}
+column_134_snp_position <- select(snp_position, `SNP_ID`, `Chromosome`, `Position`)
+```
+
+### Extract Maize and Teosinte Data from `fang_et_al_genotype` 
+
+```{r}
+teosinte_data <- fang_et_al_genotypes %>%
+  filter(fang_et_al_genotypes[[3]] %in% c("ZMPBA", "ZMPIL", "ZMPJA"))
+maize_data <- fang_et_al_genotypes %>%
+  filter(fang_et_al_genotypes[[3]] %in% c("ZMMIL", "ZMMLR", "ZMMMR"))
+```
+
+### Transpose Maize and Teosinte Data
+
+```{r}
+transposed_maize_data <- data.frame(t(maize_data)) %>%
+  rownames_to_column("SNP_ID")
+transposed_teosinte_data <- data.frame(t(teosinte_data)) %>% 
+  rownames_to_column("SNP_ID")
+```
+
+### Join SNP positions and Genotype Data
+
+```{r}
+joined_maize_data <- inner_join(column_134_snp_position, transposed_maize_data, by = "SNP_ID")
+joined_teosinte_data <- inner_join(column_134_snp_position, transposed_teosinte_data, by = "SNP_ID")
+```
+
+### Arrange and Format Data
+
+```{r}
+Asc_joined_maize_data <- joined_maize_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "?")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(Position)
+Des_joined_maize_data <- joined_maize_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "-")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(desc(Position))
+Asc_joined_teosinte_data <- joined_teosinte_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "?")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(Position)
+Des_joined_teosinte_data <- joined_teosinte_data %>% 
+  mutate_all(~str_replace_all(., "\\?/\\?", "-")) %>% 
+  mutate(Position = as.numeric(Position)) %>% 
+  arrange(desc(Position))
+```
+
+### Extract New Data Files for Each Chromosome
+
+```{r}
+for (i in 1:10) {
+  maize_data_asc_chr <- Asc_joined_maize_data %>% filter(Chromosome == i) 
+  assign(paste0("maize_data_asc_chr", i), maize_data_asc_chr)
+  file_path <- file.path('~/EEOB546_R_Lesson/R_Assignment', paste0("maize_asc_chr", i, ".csv"))
+  write.csv(maize_data_asc_chr, file = file_path, row.names = FALSE)
+}
+for (i in 1:10) {
+  maize_data_des_chr <- Des_joined_maize_data %>% filter(Chromosome == i) 
+  assign(paste0("maize_data_des_chr", i), maize_data_des_chr)
+  file_path <- file.path('~/EEOB546_R_Lesson/R_Assignment', paste0("maize_des_chr", i, ".csv"))
+  write.csv(maize_data_des_chr, file = file_path, row.names = FALSE)
+} 
+for (i in 1:10) {
+  teosinte_data_asc_chr <- Asc_joined_teosinte_data %>% filter(Chromosome == i) 
+  assign(paste0("teosinte_data_asc_chr", i), teosinte_data_asc_chr)
+  file_path <- file.path('~/EEOB546_R_Lesson/R_Assignment', paste0("teosinte_asc_chr", i, ".csv"))
+  write.csv(teosinte_data_asc_chr, file = file_path, row.names = FALSE)
+}
+for (i in 1:10) {
+  teosinte_data_des_chr <- Des_joined_teosinte_data %>% filter(Chromosome == i) 
+  assign(paste0("teosinte_data_des_chr", i), teosinte_data_des_chr)
+  file_path <- file.path('~/EEOB546_R_Lesson/R_Assignment', paste0("teosinte_des_chr", i, ".csv"))
+  write.csv(teosinte_data_des_chr, file = file_path, row.names = FALSE)
+}
+```
+
+## Data Visualization
+
+### Maize SNP Counts
+
+```{r}
+maize_chromosome_counts <- table(joined_maize_data$Chromosome) 
+
+maize_counts_df <- data.frame(
+  Chromosome = as.character(names(chromosome_counts)),
+  Count = as.numeric(chromosome_counts)
+)
+maize_counts_df$Organism <- "Maize"
+
+maize_snp_plot <- ggplot(counts_df, aes(x = factor(Chromosome), y = Count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Maize SNPs",
+       x = "Chromosome", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+### Teosinte SNP Counts
+
+```{r}
+teosinte_chromosome_counts <- table(joined_teosinte_data$Chromosome)
+
+teosinte_counts_df <- data.frame(
+  Chromosome = as.character(names(chromosome_counts)),
+  Count = as.numeric(chromosome_counts)
+)
+teosinte_counts_df$Organism <- "Teosinte"
+
+teosinte_snp_plot <- ggplot(counts_df, aes(x = factor(Chromosome), y = Count)) +
+  geom_bar(stat = "identity", fill = "lightgreen") +
+  labs(title = "Teosinte SNPs",
+       x = "Chromosome", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+### Combined SNPs
+
+```{r}
+combined_plot <- grid.arrange(maize_snp_plot, teosinte_snp_plot, nrow = 2)
+print(combined_plot)
+combined_data <- rbind(maize_counts_df, teosinte_counts_df)
+
+ggplot(combined_data, aes(x = factor(Chromosome), y = Count, fill = Organism )) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Combined Bar Plot",
+       x = "Chromosome", y = "Count",
+       fill = "Organism") +
+  theme_minimal()
+```
+
+### Genotypic Distribution
+
+```{r}
+nucleotides <- c("A", "T", "C", "G")
+missing <- c("?/?")
+homozygous <- character()
+heterozygous <- character()
+for (i in 1:length(nucleotides)) {
+  for (j in 1:length(nucleotides)) {
+    genotype <- paste(nucleotides[i], "/", nucleotides[j], sep = "")
+    if (i == j) {
+      homozygous <- c(homozygous, genotype)
+    } else {
+      heterozygous <- c(heterozygous, genotype)
+    }
+  }
+}
+```
+
+```{r}
+maize_genotype_counts <- data.frame(
+  homozygous_count <- sum(joined_maize_data == homozygous),
+  heterozygous_count <- sum(joined_maize_data == heterozygous),
+  missing_count <- sum(joined_maize_data == missing)
+)
+colnames(maize_genotype_counts) <- c("Homozygous", "Heterzygous", "Missing")
+maize_genotype_counts <- data.frame(t(maize_genotype_counts))
+maize_genotype_counts <- rownames_to_column(maize_genotype_counts, "Genotype")
+
+teosinte_genotype_counts <- data.frame(
+  homozygous_count <- sum(joined_teosinte_data == homozygous),
+  heterozygous_count <- sum(joined_teosinte_data == heterozygous),
+  missing_count <- sum(joined_teosinte_data == missing)
+)
+colnames(teosinte_genotype_counts) <- c("Homozygous", "Heterzygous", "Missing")
+teosinte_genotype_counts <- data.frame(t(teosinte_genotype_counts))
+teosinte_genotype_counts <- rownames_to_column(teosinte_genotype_counts, "Genotype")
+```
+
+```{r}
+maize_genotype_plot <- ggplot(maize_genotype_counts, aes(x = factor(Genotype), y = maize_genotype_counts$t.maize_genotype_counts.)) +
+  geom_bar(stat = "identity", fill = "lightgreen") +
+  labs(title = "Maize Genotypes",
+       x = "Genotype", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+teosinte_genotype_plot <- ggplot(teosinte_genotype_counts, aes(x = factor(Genotype), y = teosinte_genotype_counts$t.teosinte_genotype_counts.)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Teosinte Genotypes",
+       x = "Genotype", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) + 
+  
+print(teosinte_genotype_plot)
+print(maize_genotype_plot)
+```
+
+
+
